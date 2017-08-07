@@ -52,9 +52,12 @@ def get_list_of_university_towns():
 	#get rid of extra crap
 	#zero or more () and zero or more []. 
 	udf['RegionName'] = udf['RegionName'].str.replace(r'(\(.*?\)){0,1}(\[.*?\]){0,1}', '')
+	#get rid of university park and stuff
+	udf['RegionName'] = udf['RegionName'].str.replace(r'(.*?),', '')
 	udf['RegionName'] = udf['RegionName'].apply(lambda x: x.lstrip().rstrip())
-	print(udf.head(n=25))
-	return "ANSWER"
+	udf.reset_index(drop=True, inplace=True)
+	#print(udf.head(n=25))
+	return udf
 
 print(get_list_of_university_towns())
 
