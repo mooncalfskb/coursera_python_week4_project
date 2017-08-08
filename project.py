@@ -59,6 +59,67 @@ def get_list_of_university_towns():
 	#print(udf.head(n=25))
 	return udf
 
-print(get_list_of_university_towns())
+#print(get_list_of_university_towns())
+'''
+Definitions:
+A quarter is a specific three month period, Q1 is January through March, Q2 is April through June, Q3 is July through September, Q4 is October through December.
+A recession is defined as starting with two consecutive quarters of GDP decline, and ending with two consecutive quarters of GDP growth.
+A recession bottom is the quarter within a recession which had the lowest GDP.
+A university town is a city which has a high percentage of university students compared to the total population of the city.
+'''
 
+def process_gdp():
+	xl = pd.ExcelFile("gdplev.xls", skiprows=7)
+	gdp = xl.parse("Sheet1")
+	#drop unneeded columns
+	gdp.drop(gdp.columns[0:4], axis=1,inplace=True)
+	gdp.drop(gdp.columns[3], axis=1,inplace=True)
+	#drop extraneous headers
+	gdp.drop(gdp.index[0:7], axis=0,inplace=True)
+	#reset index (don't remove this)
+	gdp.reset_index(drop=True, inplace=True)
+	#rename columns
+	gdp.rename(columns = {'Unnamed: 4':'YearQuarter', 'Unnamed: 5':'CurrentDollars', 'Unnamed: 6':'ChainedDollars'}, inplace = True)
+	#look for 2000q1
+	cutoff = gdp.loc[gdp['YearQuarter'] == '2000q1']
+	lastb42000 = int(cutoff.index.values)
+	#drop everything before 2000q1
+	gdp.drop(gdp.index[0:lastb42000], axis=0,inplace=True)
+	#reset index again
+	gdp.reset_index(drop=True, inplace=True)
+	return gdp
+
+#df = recess, start, bottom, end
+
+def get_recessions():
+	gdpdf = process_gdp()
+	l = len(gdpdf)
+	#can't measure first one or last two...
+	rec_array = []
+	for x in range(1, l-2):
+		if (gdpdf['ChainedDollars'].iloc[x] < gdpdf['ChainedDollars'].iloc[x-1]):
+			if (gdpdf['ChainedDollars'].iloc[x+1] < gdpdf['ChainedDollars'].iloc[x]):
+				#print(gdpdf['YearQuarter'].iloc[x])
+				rec_array.append(x)	
+			ll2 = len(rec_array)
+			# if x is still going down, but is the bottom, append.
+			#print("the length of rec_array = " + str(ll2 - 1))
+			if (ll2 > 0): 
+				if (rec_array[ll2 - 1] == x-1):
+					rec_array.append(x)
+	start = int(rec_array[0])
+	ll = len(rec_array)
+	bottom = int(rec_array[ll-1])
+	end = int(rec_array[ll-1] + 2)
+	d = {'start': gdpdf['YearQuarter'].iloc[start], 'bottom': gdpdf['YearQuarter'].iloc[bottom], 'end': gdpdf['YearQuarter'].iloc[end]}
+	return d
+	
+print(get_recessions())
+
+#(use the chained value in 2009 dollars), in quarterly intervals, in the file gdplev.xls. For this assignment, only look at GDP data from the first quarter of 2000 onward.
+
+def get_recession_start():
+    '''Returns the year and quarter of the recession start time as a 
+    string value in a format such as 2005q3'''
     
+    return "ANSWER"
