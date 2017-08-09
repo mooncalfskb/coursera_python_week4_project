@@ -33,14 +33,26 @@ def convert_housing_data_to_quarters():
 	#hdf[hdf['stridx'].str.contains("Hello|Britain")]
 	#totally badass drop of 1990s columns! 
 	nineties = hdf.drop(hdf.select(lambda x: re.search('[1][9][0-9][0-9][-][0-9][0-9]', x), axis=1), axis=1, inplace=True)
-	years = {'2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010','2011','2012','2013','2014','2015','2016'}
-	quarters={'q1':['01','02','03'], 'q2':['04','05','06'], 'q3':['07','08','09'],'q4':['10','11','12']
+	years = ['2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010','2011','2012','2013','2014','2015']
+	quarters={'q1':['01','02','03'], 'q2':['04','05','06'], 'q3':['07','08','09'],'q4':['10','11','12']}
 	yl = len(years)
 	print(yl)
 	ql = len(quarters)
 	print(ql)
+	myquarters = []
+	for year in range(0, yl):
+		for quarter in quarters:
+			this_quarter = str(years[year]) + str(quarter)
+			print(this_quarter)
+			for month in range(0,3):
+				#select the three items you want
+				myquarters.append(str(years[year]) + "-" + str(quarters[quarter][month]))
+			print(myquarters)
+			#print(hdf[myquarters].head(n=2))
+			hdf[this_quarter] = hdf[myquarters].mean(axis=1)
+			myquarters = []
 	return hdf
 
 housing = convert_housing_data_to_quarters()
 
-#print(housing.head(n=10))
+print(housing.head(n=5))
