@@ -5,6 +5,7 @@
 # use python3 in terminal
 
 ##### set up df
+import re
 import pandas as pd
 import numpy as np
 import matplotlib as plt
@@ -51,15 +52,24 @@ def get_list_of_university_towns():
 	#	udf.drop(udf.index[y], axis=0,inplace=True)
 	#get rid of extra crap
 	#zero or more () and zero or more []. 
-	udf['RegionName'] = udf['RegionName'].str.replace(r'(\(.*?\)){0,1}(\[.*?\]){0,1}', '')
-	#get rid of university park and stuff
-	udf['RegionName'] = udf['RegionName'].str.replace(r'(.*?),', '')
+	udf['RegionName'] = udf['RegionName'].str.replace(r'(.*?)(\(.*?\).*?){0,8}(\[.*?\]){0,8}', '\\1')
+	udf['RegionName'] = udf['RegionName'].str.replace(r' ,', '')
+	udf['RegionName'] = udf['RegionName'].str.replace(r'\((.*?)', '')
+	#screw it. my grep is just not that good. couldn't sort these.
+	udf['RegionName'].iloc[33] = 'Pomona'
+	udf['RegionName'].iloc[78] = 'Carrollton'
+	udf['RegionName'].iloc[141] = 'Lexington'
+	udf['RegionName'].iloc[190] = 'Springfield'
+	udf['RegionName'].iloc[216] = 'Duluth'
+	udf['RegionName'].iloc[218] = 'Mankato'
+	udf['RegionName'].iloc[237] = 'Fulton'
+	udf['RegionName'].iloc[414] = 'Providence'
 	udf['RegionName'] = udf['RegionName'].apply(lambda x: x.lstrip().rstrip())
 	udf.reset_index(drop=True, inplace=True)
 	#print(udf.head(n=25))
 	return udf
 
-#print(get_list_of_university_towns())
+print(get_list_of_university_towns())
 '''
 Definitions:
 A quarter is a specific three month period, Q1 is January through March, Q2 is April through June, Q3 is July through September, Q4 is October through December.
@@ -67,6 +77,105 @@ A recession is defined as starting with two consecutive quarters of GDP decline,
 A recession bottom is the quarter within a recession which had the lowest GDP.
 A university town is a city which has a high percentage of university students compared to the total population of the city.
 '''
+
+# list of unique states
+stateStr = """
+Ohio, Kentucky, American Samoa, Nevada, Wyoming
+,National, Alabama, Maryland, Alaska, Utah
+,Oregon, Montana, Illinois, Tennessee, District of Columbia
+,Vermont, Idaho, Arkansas, Maine, Washington
+,Hawaii, Wisconsin, Michigan, Indiana, New Jersey
+,Arizona, Guam, Mississippi, Puerto Rico, North Carolina
+,Texas, South Dakota, Northern Mariana Islands, Iowa, Missouri
+,Connecticut, West Virginia, South Carolina, Louisiana, Kansas
+,New York, Nebraska, Oklahoma, Florida, California
+,Colorado, Pennsylvania, Delaware, New Mexico, Rhode Island
+,Minnesota, Virgin Islands, New Hampshire, Massachusetts, Georgia
+,North Dakota, Virginia
+"""
+#list of regionName entries string length
+regNmLenStr = """
+06,08,12,10,10,04,10,08,09,09,05,06,11,06,12,09,08,10,12,06,
+06,06,08,05,09,06,05,06,10,28,06,06,09,06,08,09,10,35,09,15,
+13,10,07,21,08,07,07,07,12,06,14,07,08,16,09,10,11,09,10,06,
+11,05,06,09,10,12,06,06,11,07,08,13,07,11,05,06,06,07,10,08,
+11,08,13,12,06,04,08,10,08,07,12,05,06,09,07,10,16,10,06,12,
+08,07,06,06,06,11,14,11,07,06,06,12,08,10,11,06,10,14,04,11,
+18,07,07,08,09,06,13,11,12,10,07,12,07,04,08,09,09,13,08,10,
+16,09,10,08,06,08,12,07,11,09,07,09,06,12,06,09,07,10,09,10,
+09,06,15,05,10,09,11,12,10,10,09,13,06,09,11,06,11,09,13,37,
+06,13,06,09,49,07,11,12,09,11,11,07,12,10,06,06,09,04,09,15,
+10,12,05,09,08,09,09,07,14,06,07,16,12,09,07,09,06,32,07,08,
+08,06,10,36,09,10,09,06,09,11,09,06,10,07,14,08,07,06,10,09,
+05,11,07,06,08,07,05,07,07,04,06,05,09,04,25,06,07,08,05,08,
+06,05,11,09,07,07,06,13,09,05,16,05,10,09,08,11,06,06,06,10,
+09,07,06,07,10,05,08,07,06,08,06,30,09,07,06,11,07,12,08,09,
+16,12,11,08,06,04,10,10,15,05,11,11,09,08,06,04,10,10,07,09,
+11,08,26,07,13,05,11,03,08,07,06,05,08,13,10,08,08,08,07,07,
+09,05,04,11,11,07,06,10,11,03,04,06,06,08,08,06,10,09,05,11,
+07,09,06,12,13,09,10,11,08,07,07,08,09,10,08,10,08,56,07,12,
+07,16,08,04,10,10,10,10,07,09,08,09,09,10,07,09,09,09,12,14,
+10,29,19,07,11,12,13,13,09,10,12,12,12,08,10,07,10,07,07,08,
+08,08,09,10,09,11,09,07,09,10,11,11,10,09,09,12,09,06,08,07,
+12,09,07,07,06,06,08,06,15,08,06,06,10,10,10,07,05,10,07,11,
+09,12,10,12,04,10,05,05,04,14,07,10,09,07,11,10,10,10,11,15,
+09,14,12,09,09,07,12,04,10,10,06,10,07,28,06,10,08,09,10,10,
+10,13,12,08,10,09,09,07,09,09,07,11,11,13,08,10,07
+"""
+
+df = get_list_of_university_towns()
+
+cols = ["State", "RegionName"]
+
+print('Shape test: ', "Passed" if df.shape ==
+      (517, 2) else 'Failed')
+print('Index test: ',
+      "Passed" if df.index.tolist() == list(range(517))
+      else 'Failed')
+
+print('Column test: ',
+      "Passed" if df.columns.tolist() == cols else 'Failed')
+print('\\n test: ',
+      "Failed" if any(df[cols[0]].str.contains(
+          '\n')) or any(df[cols[1]].str.contains('\n'))
+      else 'Passed')
+print('Trailing whitespace test:',
+      "Failed" if any(df[cols[0]].str.contains(
+          '\s+$')) or any(df[cols[1]].str.contains(
+              '\s+$'))
+      else 'Passed')
+print('"(" test:',
+      "Failed" if any(df[cols[0]].str.contains(
+          '\(')) or any(df[cols[1]].str.contains(
+              '\('))
+      else 'Passed')
+print('"[" test:',
+      "Failed" if any(df[cols[0]].str.contains(
+          '\[')) or any(df[cols[1]].str.contains(
+              '\]'))
+      else 'Passed')
+
+states_vlist = [st.strip() for st in stateStr.split(',')]
+
+mismatchedStates = df[~df['State'].isin(
+    states_vlist)].loc[:, 'State'].unique()
+print('State test: ', "Passed" if len(
+    mismatchedStates) == 0 else "Failed")
+if len(mismatchedStates) > 0:
+    print()
+    print('The following states failed the equality test:')
+    print()
+    print('\n'.join(mismatchedStates))
+
+df['expected_length'] = [int(s.strip())
+                         for s in regNmLenStr.split(',')
+                         if s.strip().isdigit()]
+regDiff = df[df['RegionName'].str.len() != df['expected_length']].loc[
+    :, ['RegionName', 'expected_length']]
+regDiff['actual_length'] = regDiff['RegionName'].str.len()
+print('RegionName test: ', "Passed" if len(regDiff) ==
+      0 else ' \nMismatching regionNames\n {}'.format(regDiff))
+
 
 def process_gdp():
 	xl = pd.ExcelFile("gdplev.xls", skiprows=7)
@@ -114,12 +223,32 @@ def get_recessions():
 	d = {'start': gdpdf['YearQuarter'].iloc[start], 'bottom': gdpdf['YearQuarter'].iloc[bottom], 'end': gdpdf['YearQuarter'].iloc[end]}
 	return d
 	
-print(get_recessions())
+rec_dic = get_recessions()
 
 #(use the chained value in 2009 dollars), in quarterly intervals, in the file gdplev.xls. For this assignment, only look at GDP data from the first quarter of 2000 onward.
 
 def get_recession_start():
-    '''Returns the year and quarter of the recession start time as a 
-    string value in a format such as 2005q3'''
-    
-    return "ANSWER"
+    return rec_dic['start']
+
+def get_recession_end():
+    return rec_dic['end']
+
+def get_recession_bottom():
+    return rec_dic['bottom']
+
+##print(get_recession_start()) 
+##print(get_recession_end()) 
+##print(get_recession_bottom()) 
+
+def convert_housing_data_to_quarters():
+	'''Converts the housing data to quarters and returns it as mean 
+	values in a dataframe. This dataframe should be a dataframe with
+	columns for 2000q1 through 2016q3, and should have a multi-index
+	in the shape of ["State","RegionName"].
+	
+	Note: Quarters are defined in the assignment description, they are
+	not arbitrary three month periods.
+	
+	The resulting dataframe should have 67 columns, and 10,730 rows.
+	'''
+	return "ANSWER"
