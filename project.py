@@ -194,19 +194,55 @@ def convert_housing_data_to_quarters():
 	hdf.set_index(['State', 'RegionName'], inplace=True)
 	return hdf
 
-
+#the one i did here
 def run_ttest():
 	univ = get_list_of_university_towns()
 	rec_start = get_recession_start()
-	print(rec_start)
+	#print(rec_start)
 	rec_bottom = get_recession_bottom()
-	print(rec_bottom)
+	#print(rec_bottom)
 	housing = convert_housing_data_to_quarters()
+	recession_qs = ['2008q3', '2008q4', '2009q1', '2009q2']
 	
-	housing['RecessionUpDown'] = housing[rec_bottom] - housing[rec_start]
-	housing['RecessionEffect'] = housing['RecessionUpDown'].apply(lambda x: None if x == None else "growth" if x > 0 else "decline")
+	housing['RecessionMean'] = housing[rec_bottom] - housing[rec_start]
+	housing['RecessionEffect'] = housing['RecessionMean'].apply(lambda x: None if x == None else "growth" if x > 0 else "decline")
+	#print(housing.head(n=200))
+
+	#housing.drop(np.nan
+	#housing.drop(housing[housing['RecessionMean'] == np.nan], axis=0, inplace=True)
+	#set university town
+	s = housing.index.get_level_values('State')
+	rn = housing.index.get_level_values('RegionName')
+	housing['StateTown'] = s.map(str) + str('|') + rn.map(str)
+
+	#holy shit this took a long time to figure out. thanks internet.
+	univSeries = pd.Series(univ['State'] + "|" + univ['RegionName'])
+	housing['University'] = ""
+	mask = housing.StateTown.isin(univSeries)
+	housing.loc[mask, 'University'] = "University"
 	
-	print(housing.head(n=30))
+	housing = housing[np.isfinite(housing['RecessionMean'])]
+	
+	univTown = housing[housing['University'] == 'University']
+	univMean = univTown['RecessionMean'].mean()
+	notUnivTown = housing[housing['University'] == '']
+	notUnivMean = notUnivTown['RecessionMean'].mean()
+	#print(univMean)
+	#print(notUnivMean)
+	
+	#two values returned together unless you say t p
+	t, p = ttest_ind(univTown['RecessionMean'],notUnivTown['RecessionMean'])
+	#print(p)
+
+	if p < 0.01:
+		different = True
+	else:
+		different = False
+		
+	#print(different)
+	
+	tup = (different, p, "university town")
+	
 	'''First creates new data showing the decline or growth of housing prices
 	between the recession start and the recession bottom. Then runs a ttest
 	comparing the university town values to the non-university towns values, 
@@ -221,6 +257,83 @@ def run_ttest():
 	depending on which has a lower mean price ratio (which is equivilent to a
 	reduced market loss).'''
 	
-	return "ANSWER"
+	return tup
 	
-run_ttest()    
+print(run_ttest())
+
+'''
+def run_ttest():
+	univ = get_list_of_university_towns()
+	rec_start = get_recession_start()
+	#print(rec_start)
+	rec_bottom = get_recession_bottom()
+	#print(rec_bottom)
+	housing = convert_housing_data_to_quarters()
+	recession_qs = ['2008q3', '2008q4', '2009q1', '2009q2']
+	
+	housing['RecessionMean'] = housing[rec_bottom] - housing[rec_start]
+	housing['RecessionEffect'] = housing['RecessionMean'].apply(lambda x: None if x == None else "growth" if x > 0 else "decline")
+	#print(housing.head(n=200))
+
+	#housing.drop(np.nan
+	#housing.drop(housing[housing['RecessionMean'] == np.nan], axis=0, inplace=True)
+	#set university town
+	#housing['StateTown'] = ""
+	hl = len(housing)
+	s = housing.index.get_level_values('State')
+	print(s)    
+	rn = housing.index.get_level_values('RegionName')
+	print(rn) 
+	housing['StateTown'] = s.map(str) + str('|') + rn.map(str)
+	#holy shit this took a long time to figure out. thanks internet.
+	print(housing.head(n=25))
+	univSeries = pd.Series(univ['State'] + "|" + univ['RegionName'])
+	housing['University'] = ""
+	mask = housing.StateTown.isin(univSeries)
+	housing.loc[mask, 'University'] = "University"
+	
+	housing = housing[np.isfinite(housing['RecessionMean'])]
+	
+	univTown = housing[housing['University'] == 'University']
+	univMean = univTown['RecessionMean'].mean()
+	notUnivTown = housing[housing['University'] == '']
+	notUnivMean = notUnivTown['RecessionMean'].mean()
+	#print(univMean)
+	#print(notUnivMean)
+	
+	#two values returned together unless you say t p
+	t, p = ttest_ind(univTown['RecessionMean'],notUnivTown['RecessionMean'])
+	print(p)
+
+	if p < 0.01:
+		different = True
+	else:
+		different = False
+		
+	print(different)
+	
+	tup = (different, p, "university town")
+	
+	return tup
+	
+print(run_ttest())
+'''
+'''
+df = pd.DataFrame({'LOT': ['A1111', 'A2222', 'A3333', 'B1111', 'B2222', 'B3333'], 
+                   'LOT_VIRTUAL_LINE': ['AAA'] * 3 + ['BBB'] * 3})
+s = pd.Series(['A1111', 'B2222'], name='Lots Of Interest')
+
+print(df)
+print(s)
+
+# Value of 'GROUP' defaults to 'LOT_VIRTUAL_LINE'.
+df['GROUP'] = df.LOT_VIRTUAL_LINE
+print(df)
+
+# But gets overwritten by 'LOT' if it is in the 'Lots of Interest' series.
+mask = df.LOT.isin(s)
+print(df)
+# or... mask = df.LOT.isin(df2['Lots of Interest'])  # Whatever the column name is.
+df.loc[mask, 'GROUP'] = df.loc[mask, 'LOT']
+print(df)    
+'''
